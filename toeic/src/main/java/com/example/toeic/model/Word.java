@@ -11,7 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Table(name = "words")
+@Table(name = "word")
 @Entity
 @Getter
 @Setter
@@ -25,8 +25,14 @@ public class Word {
     @Column(name = "vocabulary", nullable = false)
     private String vocabulary;
 
-    @Column(name = "meaning", nullable = false)
+    @Column(name = "meaning")
     private String meaning;
+
+    @Column(name = "example")
+    private String example;
+
+    @Column(name = "tip")
+    private String tip;
 
     @Column(name = "part_of_speech")
     private String partOfSpeech;

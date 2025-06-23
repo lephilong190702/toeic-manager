@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.toeic.dto.PostcardData;
 import com.example.toeic.model.Word;
+import com.example.toeic.service.AIPostcartService;
 import com.example.toeic.service.WordService;
 
 @RestController
@@ -25,19 +27,21 @@ import com.example.toeic.service.WordService;
 public class WordApiController {
     @Autowired
     private WordService wordService;
-    
+    @Autowired
+    private AIPostcartService aiPostcardService;
+
     // GET /api/words
     @GetMapping
-    public ResponseEntity<List<Word>> getAllWords(){
+    public ResponseEntity<List<Word>> getAllWords() {
         List<Word> words = wordService.getAllWords();
         return ResponseEntity.ok(words);
     }
 
     // GET /api/words/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<Word> getWordById(@PathVariable Long id){
+    public ResponseEntity<Word> getWordById(@PathVariable Long id) {
         Word word = wordService.getWordById(id);
-        if(word == null){
+        if (word == null) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(word);
@@ -45,23 +49,44 @@ public class WordApiController {
 
     // POST /api/words
     @PostMapping
-    public ResponseEntity<Word> saveWord(@RequestBody Word word){
+    public ResponseEntity<Word> saveWord(@RequestBody Word word) {
+        PostcardData data = aiPostcardService.generatePostcard(word.getVocabulary());
+        word.setMeaning(data.getMeaning());
+        word.setExample(data.getExample());
+        word.setTip(data.getTip());
+        word.setPartOfSpeech(data.getPartOfSpeech());
+        word.setLevel(data.getLevel());
+        word.setTopic(data.getTopic());
         Word savedWord = wordService.saveWord(word);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedWord);
     }
 
+    // POST /api/word/{id}/generate
+    @PostMapping("/{id}/generate")
+    public ResponseEntity<Word> regeneratePostcard(@PathVariable Long id) {
+        Word word = wordService.getWordById(id);
+
+        PostcardData data = aiPostcardService.generatePostcard(word.getVocabulary());
+        word.setMeaning(data.getMeaning());
+        word.setExample(data.getExample());
+        word.setTip(data.getTip());
+
+        Word updated = wordService.saveWord(word);
+        return ResponseEntity.ok(updated);
+    }
+
     // PUT /api/words/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<Word> updateWord(@PathVariable Long id, @RequestBody Word updatedWord){
+    public ResponseEntity<Word> updateWord(@PathVariable Long id, @RequestBody Word updatedWord) {
         Word word = wordService.updateWord(id, updatedWord);
         return ResponseEntity.ok(word);
     }
 
-    //PATCH /api/words/learned/{id}
+    // PATCH /api/words/learned/{id}
     @PatchMapping("/learned/{id}")
-    public ResponseEntity<Word> toggleLearned(@PathVariable Long id){
+    public ResponseEntity<Word> toggleLearned(@PathVariable Long id) {
         Word word = wordService.toggleLearned(id);
-        if(word == null){
+        if (word == null) {
             return ResponseEntity.notFound().build();
         }
 
@@ -70,9 +95,9 @@ public class WordApiController {
 
     // DELETE /api/words/{id}
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteWord(@PathVariable Long id){
+    public ResponseEntity<Void> deleteWord(@PathVariable Long id) {
         Word word = wordService.getWordById(id);
-        if(word == null){
+        if (word == null) {
             return ResponseEntity.notFound().build();
         }
         wordService.deleteWord(id);
