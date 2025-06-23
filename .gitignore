@@ -22,3 +22,11 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# Bảo mật
+toeic/src/main/resources/application.properties
+
+# Frontend build và node_modules
+toeic-frontend/node_modules/
+toeic-frontend/dist/
+toeic-frontend/.env

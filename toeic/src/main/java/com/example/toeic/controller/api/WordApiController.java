@@ -23,7 +23,7 @@ import com.example.toeic.service.WordService;
 
 @RestController
 @RequestMapping("/api/words")
-@CrossOrigin
+@CrossOrigin(origins = "http://localhost:5173")
 public class WordApiController {
     @Autowired
     private WordService wordService;
@@ -57,6 +57,8 @@ public class WordApiController {
         word.setPartOfSpeech(data.getPartOfSpeech());
         word.setLevel(data.getLevel());
         word.setTopic(data.getTopic());
+        word.setIpa(data.getIpa());
+        word.setAudioUrl(data.getAudioUrl());
         Word savedWord = wordService.saveWord(word);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedWord);
     }

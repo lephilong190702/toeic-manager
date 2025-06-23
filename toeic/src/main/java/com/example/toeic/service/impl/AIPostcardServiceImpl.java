@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -12,86 +13,123 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import com.example.toeic.dto.PostcardData;
 import com.example.toeic.service.AIPostcartService;
+import com.example.toeic.service.PronunciationService;
 
 import lombok.extern.slf4j.Slf4j;
 
-
 @Service
 @Slf4j
-public class AIPostcardServiceImpl implements AIPostcartService{
-    private final WebClient webClient;
+public class AIPostcardServiceImpl implements AIPostcartService {
 
+    private final WebClient webClient;
+    private final String model;
+    private final PronunciationService pronunciationService;
+
+    @Autowired
     public AIPostcardServiceImpl(
             @Value("${openrouter.api.key}") String apiKey,
-            @Value("${openrouter.api.model}") String model) {
+            @Value("${openrouter.api.model}") String model,
+            PronunciationService pronunciationService) {
 
         this.webClient = WebClient.builder()
                 .baseUrl("https://openrouter.ai/api/v1")
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
-
         this.model = model;
+        this.pronunciationService = pronunciationService;
     }
-
-    private final String model;
 
     @Override
     public PostcardData generatePostcard(String word) {
-        String prompt = String.format(
+        try {
+            String aiContent = fetchAIContent(word);
+            PostcardData data = parseAIContent(aiContent);
+            enrichWithPronunciation(data, word);
+            return data;
+        } catch (Exception e) {
+            log.error("Lỗi khi tạo postcard cho từ '{}': {}", word, e.getMessage(), e);
+            return fallbackPostcard();
+        }
+    }
+
+    private String fetchAIContent(String word) {
+        String prompt = buildPrompt(word);
+        Map<String, Object> requestBody = buildRequestBody(prompt);
+
+        Map<?, ?> response = webClient.post()
+                .uri("/chat/completions")
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .block();
+
+        return extractContent(response);
+    }
+
+    private String buildPrompt(String word) {
+        return String.format(
                 "You are an English vocabulary teacher. For the word '%s',Correct the spelling of the word, if it is already correct, return the same word. Then provide the following information in exactly one line:\n"
                         + "1. A simple English definition (do NOT write \"meaning\", just the definition),\n"
                         + "2. A short example sentence using the word,\n"
                         + "3. A short tip that helps remember the word meaning through real-life usage, memory tricks, or word parts,\n"
                         + "4. The part of speech (noun, verb, adjective, etc.),\n"
-                        + "5. A topic (food, business, emotion, etc.),\n"
+                        + "5. A TOEIC-relevant topic (e.g., Business, Office, Communication),\n"
                         + "6. A difficulty level (easy, medium, hard).\n\n"
                         + "Return your response in this exact format and order:\n"
                         + "[definition] | [example sentence] | [tip] | [part of speech] | [topic] | [level]\n\n"
                         + "Do not add labels, line breaks, quotation marks, or any prefix",
                 word);
+    }
 
-        Map<String, Object> message = Map.of(
-                "role", "user",
-                "content", prompt);
+    private Map<String, Object> buildRequestBody(String prompt) {
+        return Map.of(
+                "model", model,
+                "messages", List.of(Map.of("role", "user", "content", prompt)),
+                "temperature", 0.7
+        );
+    }
 
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", model);
-        requestBody.put("messages", List.of(message));
-        requestBody.put("temperature", 0.7); // optional
+    private PostcardData parseAIContent(String content) {
+        String[] parts = content.split("\\|");
+        return new PostcardData(
+                getPart(parts, 0),
+                getPart(parts, 1),
+                getPart(parts, 2),
+                getPart(parts, 3),
+                getPart(parts, 4),
+                getPart(parts, 5)
+        );
+    }
 
-        try {
-            Map<?, ?> response = webClient.post()
-                    .uri("/chat/completions")
-                    .bodyValue(requestBody)
-                    .retrieve()
-                    .bodyToMono(Map.class)
-                    .block();
+    private void enrichWithPronunciation(PostcardData data, String word) {
+        String[] pronunciation = pronunciationService.getIpaAndAudio(word);
+        data.setIpa(pronunciation[0]);
+        data.setAudioUrl(pronunciation[1]);
+    }
 
-            String content = extractContent(response);
+    private String getPart(String[] parts, int index) {
+        return (parts.length > index && parts[index] != null) ? parts[index].trim() : "";
+    }
 
-            // Parse kết quả: "meaning | example | tip"
-            String[] parts = content.split("\\|");
-            return new PostcardData(
-                    parts.length > 0 ? parts[0].trim() : "No meaning",
-                    parts.length > 1 ? parts[1].trim() : "No example",
-                    parts.length > 2 ? parts[2].trim() : "No tip",
-                    parts.length > 3 ? parts[3].trim() : "No part of speech",
-                    parts.length > 4 ? parts[4].trim() : "No topic",
-                    parts.length > 5 ? parts[5].trim() : "No level");
-
-        } catch (Exception e) {
-            log.error("Lỗi khi gọi AI: {}", e.getMessage(), e);
-            return new PostcardData("No meaning", "No example", "No tip", "No part of speech", "No level", "No topic");
-        }
+    private PostcardData fallbackPostcard() {
+        return new PostcardData(
+                "No meaning", "No example", "No tip",
+                "No part of speech", "No topic", "No level",
+                "No ipa", "No audio");
     }
 
     private String extractContent(Map<?, ?> response) {
-        List<?> choices = (List<?>) response.get("choices");
-        if (choices == null || choices.isEmpty())
-            return "No content";
-        Map<?, ?> choice = (Map<?, ?>) choices.get(0);
-        Map<?, ?> message = (Map<?, ?>) choice.get("message");
-        return message.get("content").toString();
+        try {
+            List<?> choices = (List<?>) response.get("choices");
+            if (choices == null || choices.isEmpty()) return "";
+
+            Map<?, ?> choice = (Map<?, ?>) choices.get(0);
+            Map<?, ?> message = (Map<?, ?>) choice.get("message");
+            return message.get("content").toString();
+        } catch (Exception e) {
+            log.warn("Không thể trích xuất content từ response: {}", e.getMessage());
+            return "";
+        }
     }
 }

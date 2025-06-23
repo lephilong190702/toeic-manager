@@ -8,6 +8,7 @@ public class ToeicApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(ToeicApplication.class, args);
+		
 	}
 
 }

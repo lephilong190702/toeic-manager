@@ -14,4 +14,16 @@ public class PostcardData {
     private String partOfSpeech;
     private String topic;
     private String level;
+    private String ipa;
+    private String audioUrl;
+
+    public PostcardData(String meaning, String example, String tip,
+            String partOfSpeech, String topic, String level) {
+        this.meaning = meaning;
+        this.example = example;
+        this.tip = tip;
+        this.partOfSpeech = partOfSpeech;
+        this.topic = topic;
+        this.level = level;
+    }
 }

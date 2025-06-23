@@ -45,4 +45,10 @@ public class Word {
 
     @Column(name = "learned", nullable = false)
     private boolean learned = false;
+
+    @Column(name = "ipa")
+    private String ipa;
+
+    @Column(name = "audio", length = 512)
+    private String audioUrl;
 }
