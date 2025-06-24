@@ -39,13 +39,14 @@ AI-powered web app to manage and learn TOEIC vocabulary using flashcards.
 cd toeic
 ./mvnw spring-boot:run
 
+# properties
+openrouter.api.key=YOUR_KEY
+spring.datasource.url=jdbc:mysql://localhost:3306/toeic_vocab
+
 # Frontend
 cd frontend
 npm install
 npm run dev
 
-Update .env or application.properties:
 
-# properties
-openrouter.api.key=YOUR_KEY
-spring.datasource.url=jdbc:mysql://localhost:3306/toeic_vocab
+
