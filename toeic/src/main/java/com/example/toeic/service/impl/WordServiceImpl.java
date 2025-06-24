@@ -2,15 +2,21 @@ package com.example.toeic.service.impl;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.example.toeic.model.Topic;
 import com.example.toeic.model.Word;
+import com.example.toeic.repository.TopicRepository;
 import com.example.toeic.repository.WordRepository;
 import com.example.toeic.service.WordService;
 
 @Service
-public class WordServiceImpl implements WordService{
+public class WordServiceImpl implements WordService {
     private final WordRepository wordRepository;
+
+    @Autowired
+    private TopicRepository topicRepository;
 
     public WordServiceImpl(WordRepository wordRepository) {
         this.wordRepository = wordRepository;
@@ -37,8 +43,10 @@ public class WordServiceImpl implements WordService{
     }
 
     @Override
-    public List<Word> findWordsByTopic(String topic) {
-        return wordRepository.findByTopic(topic);
+    public List<Word> findWordsByTopic(String name) {
+        Topic topic = topicRepository.findByNameIgnoreCase(name)
+        .orElseThrow(() -> new IllegalArgumentException("Topic not found: " + name));
+    return wordRepository.findByTopic(topic);
     }
 
     @Override
@@ -49,7 +57,7 @@ public class WordServiceImpl implements WordService{
     @Override
     public Word toggleLearned(Long id) {
         Word word = getWordById(id);
-        if(word != null){
+        if (word != null) {
             word.setLearned(!word.isLearned());
             return wordRepository.save(word);
         }
@@ -59,8 +67,9 @@ public class WordServiceImpl implements WordService{
     @Override
     public Word updateWord(Long id, Word updateWord) {
         Word word = wordRepository.findById(id).orElse(null);
-        if(updateWord != null){
-            word.setVocabulary(updateWord.getVocabulary());;
+        if (updateWord != null) {
+            word.setVocabulary(updateWord.getVocabulary());
+            ;
             word.setMeaning(updateWord.getMeaning());
             word.setPartOfSpeech(updateWord.getPartOfSpeech());
             word.setTopic(updateWord.getTopic());
@@ -70,5 +79,5 @@ public class WordServiceImpl implements WordService{
         }
         return null;
     }
-    
+
 }

@@ -4,7 +4,6 @@ import { SparklesIcon } from "lucide-react";
 import api from "../services/api";
 import levenshtein from "js-levenshtein";
 import englishWords from "./englishWords.json";
-import styles from "./StartPage.module.css";
 
 function StartPage() {
   const [inputText, setInputText] = useState("");
@@ -60,7 +59,7 @@ function StartPage() {
           validWords.push(wordData);
         }
         setProgress({ current: i + 1, total: wordList.length });
-        await new Promise((resolve) => setTimeout(resolve, 100)); // Optional delay
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
       setGeneratedList(validWords);
@@ -71,18 +70,21 @@ function StartPage() {
     setIsGenerating(false);
   };
 
-  // Hiển thị flashcard sau khi generate
   if (generatedList.length > 0) {
-    return <FlashcardSlider wordList={generatedList} />;
+    return (
+      <div className="w-full min-h-screen bg-gradient-to-br from-blue-100 to-white flex items-center justify-center p-4">
+        <FlashcardSlider wordList={generatedList} />
+      </div>
+    );
   }
 
   return (
-    <div className={styles.container}>
-      <div className={styles.card}>
+    <div className="w-full min-h-screen bg-gradient-to-br from-blue-100 to-white flex items-center justify-center p-4">
+      <div className="w-full max-w-xl bg-white rounded-xl shadow-lg border border-blue-200 p-8 text-center">
         <div className="flex flex-col items-center space-y-4">
           <SparklesIcon className="text-blue-500" size={36} />
-          <h1 className={styles.title}>TOEIC Vocabulary</h1>
-          <p className={styles.subtitle}>
+          <h1 className="text-2xl font-bold text-gray-800">TOEIC Vocabulary</h1>
+          <p className="text-sm text-gray-500">
             Enter multiple words to generate flashcards
           </p>
         </div>
@@ -92,19 +94,19 @@ function StartPage() {
           placeholder="e.g. efficient, revenue, negotiate"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
-          className={styles.textarea}
+          className="mt-6 w-full p-3 border border-gray-300 rounded-lg text-lg shadow-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
 
         <button
           onClick={handlePreview}
-          className={`${styles.button} ${styles.previewButton}`}
+          className="mt-4 w-full py-3 rounded-lg bg-blue-100 text-blue-800 font-semibold hover:bg-blue-200 transition"
         >
           Preview Words
         </button>
 
         {wordList.length > 0 && (
           <>
-            <div className="mt-4 text-left text-gray-700">
+            <div className="mt-6 text-left text-gray-700">
               <p className="font-semibold mb-2">Words to generate:</p>
               <ul className="flex flex-col gap-2">
                 {wordList.map((word, index) => {
@@ -114,20 +116,21 @@ function StartPage() {
                   return (
                     <li key={index}>
                       <span
-                        className={`${styles.wordTag} ${
-                          isSuggested ? styles.suggested : styles.normal
+                        className={`inline-block px-3 py-1 rounded-full text-sm font-medium border ${
+                          isSuggested
+                            ? "bg-yellow-100 text-yellow-800 border-yellow-300"
+                            : "bg-blue-50 text-blue-800 border-blue-300"
                         }`}
                       >
                         {word}
                       </span>
-
                       {isSuggested && (
-                        <div className={styles.suggestionText}>
+                        <div className="text-sm text-yellow-700 mt-1 ml-2">
                           ⚠ Did you mean:&nbsp;
                           {suggestedList.map((s, i) => (
                             <span
                               key={i}
-                              className={styles.suggestionWord}
+                              className="font-semibold underline cursor-pointer mr-2 hover:text-yellow-900"
                               onClick={() => {
                                 const newInput = inputText.replace(
                                   new RegExp(`\\b${word}\\b`, "gi"),
@@ -139,8 +142,7 @@ function StartPage() {
                             >
                               {s}
                             </span>
-                          ))}
-                          ?
+                          ))}?
                         </div>
                       )}
                     </li>
@@ -152,8 +154,10 @@ function StartPage() {
             <button
               onClick={handleGenerate}
               disabled={isGenerating}
-              className={`${styles.button} ${
-                isGenerating ? styles.disabledButton : styles.generateButton
+              className={`mt-4 w-full py-3 rounded-lg font-semibold text-white transition ${
+                isGenerating
+                  ? "bg-blue-300 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700"
               }`}
             >
               {isGenerating

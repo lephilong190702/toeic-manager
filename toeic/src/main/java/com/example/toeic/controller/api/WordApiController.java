@@ -1,6 +1,7 @@
 package com.example.toeic.controller.api;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -47,21 +48,21 @@ public class WordApiController {
         return ResponseEntity.ok(word);
     }
 
-    // POST /api/words
-    @PostMapping
-    public ResponseEntity<Word> saveWord(@RequestBody Word word) {
-        PostcardData data = aiPostcardService.generatePostcard(word.getVocabulary());
-        word.setMeaning(data.getMeaning());
-        word.setExample(data.getExample());
-        word.setTip(data.getTip());
-        word.setPartOfSpeech(data.getPartOfSpeech());
-        word.setLevel(data.getLevel());
-        word.setTopic(data.getTopic());
-        word.setIpa(data.getIpa());
-        word.setAudioUrl(data.getAudioUrl());
-        Word savedWord = wordService.saveWord(word);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedWord);
-    }
+    // // POST /api/words
+    // @PostMapping
+    // public ResponseEntity<Word> saveWord(@RequestBody Word word) {
+    //     PostcardData data = aiPostcardService.generatePostcard(word.getVocabulary());
+    //     word.setMeaning(data.getMeaning());
+    //     word.setExample(data.getExample());
+    //     word.setTip(data.getTip());
+    //     word.setPartOfSpeech(data.getPartOfSpeech());
+    //     word.setLevel(data.getLevel());
+    //     word.setTopic(data.getTopic());
+    //     word.setIpa(data.getIpa());
+    //     word.setAudioUrl(data.getAudioUrl());
+    //     Word savedWord = wordService.saveWord(word);
+    //     return ResponseEntity.status(HttpStatus.CREATED).body(savedWord);
+    // }
 
     // POST /api/words/generate-batch
     @PostMapping("/generate-batch")
@@ -74,18 +75,10 @@ public class WordApiController {
         return ResponseEntity.ok(postcards);
     }
 
-    // POST /api/word/{id}/generate
-    @PostMapping("/{id}/generate")
-    public ResponseEntity<Word> regeneratePostcard(@PathVariable Long id) {
-        Word word = wordService.getWordById(id);
-
-        PostcardData data = aiPostcardService.generatePostcard(word.getVocabulary());
-        word.setMeaning(data.getMeaning());
-        word.setExample(data.getExample());
-        word.setTip(data.getTip());
-
-        Word updated = wordService.saveWord(word);
-        return ResponseEntity.ok(updated);
+    @PutMapping("/{id}/regenerate")
+    public ResponseEntity<PostcardData> regeneratePostcard(@PathVariable Long id) {
+        PostcardData regenerated = aiPostcardService.regeneratePostcard(id);
+        return ResponseEntity.ok(regenerated);
     }
 
     // PUT /api/words/{id}

@@ -1,10 +1,14 @@
 package com.example.toeic.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -37,9 +41,6 @@ public class Word {
     @Column(name = "part_of_speech")
     private String partOfSpeech;
 
-    @Column(name = "topic")
-    private String topic;
-
     @Column(name = "level")
     private String level;
 
@@ -51,4 +52,10 @@ public class Word {
 
     @Column(name = "audio", length = 512)
     private String audioUrl;
+
+    @ManyToOne
+    @JoinColumn(name = "topic_id")
+    @JsonBackReference
+    private Topic topic;
+
 }

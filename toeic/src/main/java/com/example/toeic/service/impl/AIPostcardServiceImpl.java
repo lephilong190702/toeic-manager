@@ -16,10 +16,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.example.toeic.dto.PostcardData;
+import com.example.toeic.model.Topic;
 import com.example.toeic.model.Word;
 import com.example.toeic.repository.WordRepository;
 import com.example.toeic.service.AIPostcartService;
 import com.example.toeic.service.PronunciationService;
+import com.example.toeic.service.TopicService;
 
 import lombok.extern.slf4j.Slf4j;
 import reactor.netty.http.client.HttpClient;
@@ -32,12 +34,13 @@ public class AIPostcardServiceImpl implements AIPostcartService {
     private final String model;
     private final PronunciationService pronunciationService;
     private final WordRepository wordRepository;
+    private final TopicService topicService;
 
     @Autowired
     public AIPostcardServiceImpl(
             @Value("${openrouter.api.key}") String apiKey,
             @Value("${openrouter.api.model}") String model,
-            PronunciationService pronunciationService, WordRepository wordRepository) {
+            PronunciationService pronunciationService, WordRepository wordRepository, TopicService topicService) {
 
         this.webClient = WebClient.builder()
                 .baseUrl("https://openrouter.ai/api/v1")
@@ -51,6 +54,7 @@ public class AIPostcardServiceImpl implements AIPostcartService {
         this.model = model;
         this.pronunciationService = pronunciationService;
         this.wordRepository = wordRepository;
+        this.topicService = topicService;
     }
 
     @Override
@@ -74,7 +78,8 @@ public class AIPostcardServiceImpl implements AIPostcartService {
             newWord.setExample(data.getExample());
             newWord.setTip(data.getTip());
             newWord.setPartOfSpeech(data.getPartOfSpeech());
-            newWord.setTopic(data.getTopic());
+            Topic topicEntity = topicService.createTopicIfNotExists(data.getTopic());
+            newWord.setTopic(topicEntity);
             newWord.setLevel(data.getLevel());
             newWord.setIpa(data.getIpa());
             newWord.setAudioUrl(data.getAudioUrl());
@@ -153,7 +158,7 @@ public class AIPostcardServiceImpl implements AIPostcartService {
 
     private PostcardData fallbackPostcard() {
         return new PostcardData(
-                null,"", "No meaning", "No example", "No tip",
+                null, "", "No meaning", "No example", "No tip",
                 "No part of speech", "No topic", "No level",
                 "No ipa", "No audio", true, "");
     }
@@ -192,10 +197,55 @@ public class AIPostcardServiceImpl implements AIPostcartService {
         data.setExample(word.getExample());
         data.setTip(word.getTip());
         data.setPartOfSpeech(word.getPartOfSpeech());
-        data.setTopic(word.getTopic());
+        data.setTopic(word.getTopic() != null ? word.getTopic().getName() : "");
         data.setLevel(word.getLevel());
         data.setIpa(word.getIpa());
         data.setAudioUrl(word.getAudioUrl());
         return data;
+    }
+
+    @Override
+    public PostcardData regeneratePostcard(Long id) {
+        try {
+            Word updateWord = wordRepository.findById(id).orElse(null);
+            if (updateWord == null) {
+                throw new IllegalArgumentException("Word not found with ID: " + id);
+            }
+
+            String vocabulary = updateWord.getVocabulary();
+
+            // Gọi AI sinh nội dung mới
+            String aiContent = fetchAIContent(vocabulary);
+            PostcardData data = parseAIContent(aiContent);
+            enrichWithPronunciation(data, vocabulary);
+
+            // Ghi đè nội dung cũ
+            updateWord.setMeaning(data.getMeaning());
+            updateWord.setExample(data.getExample());
+            updateWord.setTip(data.getTip());
+            updateWord.setPartOfSpeech(data.getPartOfSpeech());
+            Topic topicEntity = topicService.createTopicIfNotExists(data.getTopic());
+            updateWord.setTopic(topicEntity);
+
+            updateWord.setLevel(data.getLevel());
+            updateWord.setIpa(data.getIpa());
+            updateWord.setAudioUrl(data.getAudioUrl());
+
+            // Ghi đè vào database
+            wordRepository.save(updateWord);
+
+            // Cập nhật lại ID cho PostcardData
+            data.setId(updateWord.getId());
+            data.setVocabulary(vocabulary); // cần có từ vựng để frontend hiển thị
+
+            return data;
+
+        } catch (Exception e) {
+            log.error("❌ Lỗi khi regenerate postcard cho '{}': {}", e.getMessage(), e);
+            PostcardData failed = new PostcardData();
+            failed.setError(true);
+            failed.setErrorMessage("Failed to regenerate word: " + e.getMessage());
+            return failed;
+        }
     }
 }
