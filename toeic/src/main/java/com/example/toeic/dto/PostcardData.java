@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PostcardData {
+    private Long id;
     private String vocabulary;
     private String meaning;
     private String example;

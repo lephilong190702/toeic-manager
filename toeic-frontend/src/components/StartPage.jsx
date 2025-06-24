@@ -59,17 +59,19 @@ function StartPage() {
         if (!wordData.error) {
           validWords.push(wordData);
         }
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        setGeneratedList([...validWords]);
         setProgress({ current: i + 1, total: wordList.length });
+        await new Promise((resolve) => setTimeout(resolve, 100)); // Optional delay
       }
+
+      setGeneratedList(validWords);
     } catch (err) {
-      console.error("Batch failed:", err);
+      console.error("Batch generate failed:", err);
     }
 
     setIsGenerating(false);
   };
 
+  // Hiển thị flashcard sau khi generate
   if (generatedList.length > 0) {
     return <FlashcardSlider wordList={generatedList} />;
   }

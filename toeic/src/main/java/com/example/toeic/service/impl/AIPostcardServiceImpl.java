@@ -81,6 +81,7 @@ public class AIPostcardServiceImpl implements AIPostcartService {
             newWord.setLearned(false);
 
             wordRepository.save(newWord);
+            data.setId(newWord.getId());
 
             return data;
         } catch (Exception e) {
@@ -152,7 +153,7 @@ public class AIPostcardServiceImpl implements AIPostcartService {
 
     private PostcardData fallbackPostcard() {
         return new PostcardData(
-                "", "No meaning", "No example", "No tip",
+                null,"", "No meaning", "No example", "No tip",
                 "No part of speech", "No topic", "No level",
                 "No ipa", "No audio", true, "");
     }
@@ -185,6 +186,7 @@ public class AIPostcardServiceImpl implements AIPostcartService {
 
     private PostcardData convertToPostcardData(Word word) {
         PostcardData data = new PostcardData();
+        data.setId(word.getId());
         data.setVocabulary(word.getVocabulary());
         data.setMeaning(word.getMeaning());
         data.setExample(word.getExample());
