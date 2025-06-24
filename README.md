@@ -1,27 +1,37 @@
-# 📚 TOEIC Manager
+# TOEIC Vocabulary Manager
 
-A web-based system to manage TOEIC vocabulary using Spring Boot REST API and ReactJS frontend. The system supports adding new words, editing, deleting, and automatically generating English definitions, usage examples, memory tips, part of speech, topic, and difficulty level using an AI model.
+A full-stack web application to **manage and learn TOEIC vocabulary** with AI-powered flashcards.
 
----
+## 🔍 Features
 
-## 🚀 Features
+- ✏️ Add / Edit / Delete TOEIC words
+- 🎯 Filter by **topic**, **level**, or **part of speech**
+- 📊 Mark words as **learned** and review them later
+- 🪄 Auto-generate flashcards using AI (meaning, IPA, example, tip)
+- 🔁 Flashcard learning interface (flip view + audio + example)
+- 🤖 Suggest similar words if user input contains typos
+- 📋 Batch input: enter multiple words and generate in one go
 
-- ✅ CRUD operations for vocabulary (Add, Edit, Delete, Mark as Learned)
-- 🤖 AI-powered content generation (definition, example, tip, etc.)
-- 🧠 Spelling correction for user input
-- 🔁 RESTful API using Spring Boot
-- 🌐 Simple ReactJS-based frontend
-- 🗃️ MySQL database support
-- 📂 DTO-based architecture for clean code
+## 🧠 AI Integration
 
----
+- Backend uses **OpenRouter.ai** to generate word content
+- Only saves words successfully generated
+- Frontend shows progress and skips failed items
+- Provides spelling correction suggestions with `js-levenshtein`
 
-## 🛠️ Tech Stack
+## 🧰 Tech Stack
 
-| Layer       | Technology                      |
-|-------------|----------------------------------|
-| Backend     | Spring Boot, Spring WebFlux, WebClient |
-| Frontend    | ReactJS (Vite, TailwindCSS)      |
-| Database    | MySQL                            |
-| AI Service  | OpenRouter API (e.g., Mistral)   |
-| Build Tool  | Maven                            |
+### Backend
+- **Spring Boot**
+- Spring WebFlux + WebClient
+- Spring Data JPA
+- MySQL
+- Lombok
+- Maven
+
+### Frontend
+- **ReactJS** (Vite)
+- TailwindCSS
+- Axios
+- React Context API
+- `js-levenshtein` for typo suggestions
