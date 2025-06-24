@@ -1,0 +1,78 @@
+.postcard-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(to bottom right, #ebf8ff, #ffffff);
+  padding: 2.5rem 1rem;
+}
+
+.flip-wrapper {
+  position: relative;
+  perspective: 1500px;
+  width: 420px;
+  height: 540px;
+}
+
+.flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.7s ease-in-out;
+}
+
+.flipped {
+  transform: rotateY(180deg);
+}
+
+.front-card,
+.back-card {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 1rem;
+  background: white;
+  border: 1px solid #bfdbfe;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  padding: 2rem 2.5rem;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.front-card {
+  text-align: center;
+}
+
+.back-card {
+  transform: rotateY(180deg);
+  text-align: left;
+}
+
+.audio-btn {
+  background-color: #2563eb;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+
+.audio-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.note-text {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  text-align: center;
+  pointer-events: none;
+  position: absolute;
+  bottom: 1rem;
+  left: 0;
+  width: 100%;
+}

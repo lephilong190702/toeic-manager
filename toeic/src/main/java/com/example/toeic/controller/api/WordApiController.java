@@ -63,6 +63,17 @@ public class WordApiController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedWord);
     }
 
+    // POST /api/words/generate-batch
+    @PostMapping("/generate-batch")
+    public ResponseEntity<List<PostcardData>> generatePostcards(@RequestBody List<String> words) {
+        if (words == null || words.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        List<PostcardData> postcards = aiPostcardService.generatePostcards(words);
+        return ResponseEntity.ok(postcards);
+    }
+
     // POST /api/word/{id}/generate
     @PostMapping("/{id}/generate")
     public ResponseEntity<Word> regeneratePostcard(@PathVariable Long id) {

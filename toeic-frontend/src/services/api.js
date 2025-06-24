@@ -20,6 +20,7 @@ export const getWordById = (id) => api.get(`/${id}`);
 // 3. Thêm từ mới (chỉ cần vocabulary, backend sẽ tự generate postcard)
 export const createWord = (word) => api.post("", word);
 
+export const generateBatch = (words) => api.post("/generate-batch", words)
 // 4. Cập nhật từ
 export const updateWord = (id, updatedWord) => api.put(`/${id}`, updatedWord);
 
@@ -36,6 +37,7 @@ export default {
   getAllWords,
   getWordById,
   createWord,
+  generateBatch,
   updateWord,
   deleteWord,
   toggleLearned,

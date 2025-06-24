@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PostcardData {
+    private String vocabulary;
     private String meaning;
     private String example;
     private String tip;
@@ -16,6 +17,8 @@ public class PostcardData {
     private String level;
     private String ipa;
     private String audioUrl;
+    private boolean error = false;          
+    private String errorMessage = null;
 
     public PostcardData(String meaning, String example, String tip,
             String partOfSpeech, String topic, String level) {
