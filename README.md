@@ -1,37 +1,51 @@
-# TOEIC Vocabulary Manager
+# 📝 TOEIC Vocabulary Manager
 
-A full-stack web application to **manage and learn TOEIC vocabulary** with AI-powered flashcards.
+AI-powered web app to manage and learn TOEIC vocabulary using flashcards.
 
-## 🔍 Features
+## 🚀 Features
 
-- ✏️ Add / Edit / Delete TOEIC words
-- 🎯 Filter by **topic**, **level**, or **part of speech**
-- 📊 Mark words as **learned** and review them later
-- 🪄 Auto-generate flashcards using AI (meaning, IPA, example, tip)
-- 🔁 Flashcard learning interface (flip view + audio + example)
-- 🤖 Suggest similar words if user input contains typos
-- 📋 Batch input: enter multiple words and generate in one go
+- ✏️ Add / Edit / Delete words
+- 🧠 Auto-generate flashcards (meaning, IPA, example, tip)
+- 📋 Batch input multiple words
+- 🎯 Filter by topic, level, part of speech
+- ✅ Mark as learned & review later
+- 🔁 Flashcard view (flip, audio, regenerate)
+- 🤖 Spelling suggestions (Levenshtein distance)
 
 ## 🧠 AI Integration
 
-- Backend uses **OpenRouter.ai** to generate word content
-- Only saves words successfully generated
-- Frontend shows progress and skips failed items
-- Provides spelling correction suggestions with `js-levenshtein`
+- Uses [OpenRouter.ai](https://openrouter.ai)
+- Only saves words with successful generation
+- Regenerate updates content without changing ID
+- Progress feedback during batch generation
 
 ## 🧰 Tech Stack
 
 ### Backend
-- **Spring Boot**
-- Spring WebFlux + WebClient
-- Spring Data JPA
+- Spring Boot + WebFlux + JPA
 - MySQL
-- Lombok
-- Maven
+- Lombok, Maven
 
 ### Frontend
-- **ReactJS** (Vite)
-- TailwindCSS
-- Axios
+- React (Vite)
+- TailwindCSS, Axios
 - React Context API
-- `js-levenshtein` for typo suggestions
+- `js-levenshtein`
+
+## ▶️ Usage
+
+```bash
+# Backend
+cd toeic
+./mvnw spring-boot:run
+
+# Frontend
+cd frontend
+npm install
+npm run dev
+
+Update .env or application.properties:
+
+# properties
+openrouter.api.key=YOUR_KEY
+spring.datasource.url=jdbc:mysql://localhost:3306/toeic_vocab
