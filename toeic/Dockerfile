@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . .
 
 # Build ứng dụng
-RUN ./mvnw clean package -DskipTests
+RUN ./mvn clean package -DskipTests
 
 # Chạy ứng dụng Spring Boot
 CMD ["java", "-jar", "target/toeic-0.0.1-SNAPSHOT.jar"]
