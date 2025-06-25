@@ -16,6 +16,7 @@ import com.example.toeic.service.StatsService;
 
 @RestController
 @RequestMapping("/api")
+@CrossOrigin
 public class StatsController {
     private final StatsService statsService;
 

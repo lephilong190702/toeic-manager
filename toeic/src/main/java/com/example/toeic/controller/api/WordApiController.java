@@ -24,6 +24,7 @@ import com.example.toeic.service.WordService;
 
 @RestController
 @RequestMapping("/api/words")
+@CrossOrigin
 public class WordApiController {
     @Autowired
     private WordService wordService;
