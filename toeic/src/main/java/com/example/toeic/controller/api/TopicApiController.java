@@ -18,7 +18,6 @@ import com.example.toeic.service.TopicService;
 
 @RestController
 @RequestMapping("/api/topics")
-@CrossOrigin(origins = "http://localhost:5173")
 public class TopicApiController {
     @Autowired
     private TopicService topicService;
