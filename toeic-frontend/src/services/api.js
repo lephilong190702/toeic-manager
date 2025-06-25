@@ -26,6 +26,12 @@ export const getTopics = () => api.get("/topics");
 export const getLearnedWordsByTopic = (topicId) =>
   api.get(`/topics/${topicId}/words/learned`);
 
+// == STATS ==
+export const getStats = () => api.get("/stats");
+export const getStatsHistory = (range) =>
+  api.get(`/stats/history?range=${range}`);
+
+
 export default {
   getAllWords,
   getWordById,
@@ -37,4 +43,6 @@ export default {
   regeneratePostcard,
   getTopics,
   getLearnedWordsByTopic,
+  getStats,
+  getStatsHistory
 };

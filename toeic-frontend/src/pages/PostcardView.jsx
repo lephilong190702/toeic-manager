@@ -13,19 +13,9 @@ function PostcardView({ word, resetFlipSignal, onMarkLearned, onRegenerate, shou
   const [learnedLocal, setLearnedLocal] = useState(word.learned || false);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    setFlipped(false);
-  }, [resetFlipSignal]);
-
-  // ✅ Chỉ cập nhật trạng thái đã học
-  useEffect(() => {
-    setLearnedLocal(word.learned || false);
-  }, [word.learned]);
-
-  // ✅ Khi regenerate xong thì mới lật về mặt trước
-  useEffect(() => {
-    setFlipped(false);
-  }, [shouldReset]);
+  useEffect(() => setFlipped(false), [resetFlipSignal]);
+  useEffect(() => setLearnedLocal(word.learned || false), [word.learned]);
+  useEffect(() => setFlipped(false), [shouldReset]);
 
   const playAudio = (e) => {
     e.stopPropagation();
@@ -40,15 +30,15 @@ function PostcardView({ word, resetFlipSignal, onMarkLearned, onRegenerate, shou
   const handleMarkLearned = (e) => {
     e.stopPropagation();
     const newLearned = !learnedLocal;
-    onMarkLearned(word.id);
     setLearnedLocal(newLearned);
+    onMarkLearned(word.id);
   };
 
   const handleRegenerate = async (e) => {
     e.stopPropagation();
     try {
       setIsLoading(true);
-      await onRegenerate(word.id); // Word sẽ được cập nhật từ FlashcardSlider
+      await onRegenerate(word.id);
     } catch (err) {
       console.error("Regenerate failed:", err);
     } finally {
@@ -57,18 +47,23 @@ function PostcardView({ word, resetFlipSignal, onMarkLearned, onRegenerate, shou
   };
 
   const toggleFlip = () => {
-    if (!isLoading) {
-      setFlipped((f) => !f);
-    }
+    if (!isLoading) setFlipped((f) => !f);
   };
 
   return (
-    <div className="postcard-container" onClick={toggleFlip} role="button" tabIndex={0} onKeyPress={toggleFlip} aria-pressed={flipped}>
+    <div
+      className="postcard-container"
+      onClick={toggleFlip}
+      role="button"
+      tabIndex={0}
+      onKeyPress={toggleFlip}
+      aria-pressed={flipped}
+    >
       <div className={`flip-inner ${flipped ? "flipped" : ""}`}>
-        {/* FRONT */}
+        {/* FRONT SIDE */}
         <div className="front-card">
           <div className="flex flex-col items-center space-y-4 z-10">
-            <div>
+            <div className="text-center">
               <h2 className="text-5xl font-extrabold text-blue-800">
                 {word.vocabulary}
               </h2>
@@ -103,14 +98,15 @@ function PostcardView({ word, resetFlipSignal, onMarkLearned, onRegenerate, shou
           <div className="note-text">(Click card to flip)</div>
         </div>
 
-        {/* BACK */}
+        {/* BACK SIDE */}
         <div className="back-card">
           <button
             onClick={handleMarkLearned}
-            className={`absolute top-4 right-4 px-4 py-2 rounded-full text-sm font-medium shadow transition duration-200 ${learnedLocal
+            className={`absolute top-4 right-4 px-4 py-2 rounded-full text-sm font-medium shadow transition duration-200 ${
+              learnedLocal
                 ? "bg-green-100 text-green-800 border border-green-400 hover:bg-green-200"
                 : "bg-gray-200 hover:bg-green-100 text-gray-800"
-              }`}
+            }`}
             aria-pressed={learnedLocal}
             type="button"
           >
@@ -118,18 +114,23 @@ function PostcardView({ word, resetFlipSignal, onMarkLearned, onRegenerate, shou
           </button>
 
           <div className="flex flex-col items-start justify-center space-y-4 w-full px-4 py-6">
+            {/* Meaning */}
             <div className="flex items-start gap-2">
               <BookOpenIcon className="text-blue-600 mt-1" size={22} />
               <p className="text-lg text-gray-900 leading-relaxed">
                 <strong className="text-blue-700">Meaning:</strong> {word.meaning}
               </p>
             </div>
+
+            {/* Example */}
             <div className="flex items-start gap-2">
               <QuoteIcon className="text-green-600 mt-1" size={22} />
               <p className="italic text-gray-800 leading-relaxed">
                 <strong className="text-green-700">Example:</strong> “{word.example}”
               </p>
             </div>
+
+            {/* Tip */}
             <div className="flex items-start gap-2">
               <LightbulbIcon className="text-yellow-500 mt-1" size={22} />
               <p className="text-gray-800 leading-relaxed">
@@ -137,6 +138,7 @@ function PostcardView({ word, resetFlipSignal, onMarkLearned, onRegenerate, shou
               </p>
             </div>
 
+            {/* Tags */}
             <div className="flex justify-start flex-wrap gap-3 pt-3">
               <span className="bg-blue-100 text-blue-900 text-sm font-medium px-5 py-1 rounded-full select-text">
                 Topic: {word.topic}
@@ -146,6 +148,7 @@ function PostcardView({ word, resetFlipSignal, onMarkLearned, onRegenerate, shou
               </span>
             </div>
 
+            {/* Regenerate Button */}
             <div className="pt-6 w-full flex justify-center">
               <button
                 onClick={handleRegenerate}

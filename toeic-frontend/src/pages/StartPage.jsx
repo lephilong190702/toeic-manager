@@ -13,37 +13,40 @@ function StartPage() {
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [suggestions, setSuggestions] = useState({});
 
+  // Gợi ý từ gần đúng dựa trên khoảng cách Levenshtein
   const suggestWords = (input) => {
-    const matches = englishWords
+    return englishWords
       .map((word) => ({
         word,
         distance: levenshtein(input, word),
       }))
       .filter((entry) => entry.distance <= 2)
       .sort((a, b) => a.distance - b.distance)
-      .slice(0, 3);
-    return matches.map((m) => m.word);
+      .slice(0, 3)
+      .map((entry) => entry.word);
   };
 
+  // Phân tích danh sách từ và đưa ra gợi ý
   const handlePreview = () => {
-    const words = inputText
+    const rawWords = inputText
       .split(/[\s,]+/)
       .map((w) => w.trim().toLowerCase())
-      .filter((w) => w.length > 0);
+      .filter(Boolean);
 
     const suggestionMap = {};
-    words.forEach((word) => {
-      const suggestedList = suggestWords(word);
-      if (suggestedList.length && !suggestedList.includes(word)) {
-        suggestionMap[word] = suggestedList;
+    rawWords.forEach((word) => {
+      const suggested = suggestWords(word);
+      if (suggested.length && !suggested.includes(word)) {
+        suggestionMap[word] = suggested;
       }
     });
 
     setSuggestions(suggestionMap);
-    setWordList(words);
+    setWordList(rawWords);
     setGeneratedList([]);
   };
 
+  // Gửi danh sách từ để AI sinh postcard
   const handleGenerate = async () => {
     setIsGenerating(true);
     setGeneratedList([]);
@@ -58,6 +61,7 @@ function StartPage() {
         if (!wordData.error) {
           validWords.push(wordData);
         }
+
         setProgress({ current: i + 1, total: wordList.length });
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
@@ -70,6 +74,7 @@ function StartPage() {
     setIsGenerating(false);
   };
 
+  // Nếu đã có danh sách đã generate, hiển thị FlashcardSlider
   if (generatedList.length > 0) {
     return (
       <div className="w-full min-h-screen bg-gradient-to-br from-blue-100 to-white flex items-center justify-center p-4">
@@ -81,6 +86,7 @@ function StartPage() {
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-blue-100 to-white flex items-center justify-center p-4">
       <div className="w-full max-w-xl bg-white rounded-xl shadow-lg border border-blue-200 p-8 text-center">
+        {/* Header */}
         <div className="flex flex-col items-center space-y-4">
           <SparklesIcon className="text-blue-500" size={36} />
           <h1 className="text-2xl font-bold text-gray-800">TOEIC Vocabulary</h1>
@@ -89,6 +95,7 @@ function StartPage() {
           </p>
         </div>
 
+        {/* Input */}
         <textarea
           rows={5}
           placeholder="e.g. efficient, revenue, negotiate"
@@ -97,6 +104,7 @@ function StartPage() {
           className="mt-6 w-full p-3 border border-gray-300 rounded-lg text-lg shadow-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
 
+        {/* Preview Button */}
         <button
           onClick={handlePreview}
           className="mt-4 w-full py-3 rounded-lg bg-blue-100 text-blue-800 font-semibold hover:bg-blue-200 transition"
@@ -104,6 +112,7 @@ function StartPage() {
           Preview Words
         </button>
 
+        {/* Danh sách từ cần generate */}
         {wordList.length > 0 && (
           <>
             <div className="mt-6 text-left text-gray-700">
@@ -111,20 +120,22 @@ function StartPage() {
               <ul className="flex flex-col gap-2">
                 {wordList.map((word, index) => {
                   const suggestedList = suggestions[word];
-                  const isSuggested = suggestedList && suggestedList.length > 0;
+                  const hasSuggestion = suggestedList && suggestedList.length > 0;
 
                   return (
                     <li key={index}>
                       <span
                         className={`inline-block px-3 py-1 rounded-full text-sm font-medium border ${
-                          isSuggested
+                          hasSuggestion
                             ? "bg-yellow-100 text-yellow-800 border-yellow-300"
                             : "bg-blue-50 text-blue-800 border-blue-300"
                         }`}
                       >
                         {word}
                       </span>
-                      {isSuggested && (
+
+                      {/* Hiển thị gợi ý nếu có */}
+                      {hasSuggestion && (
                         <div className="text-sm text-yellow-700 mt-1 ml-2">
                           ⚠ Did you mean:&nbsp;
                           {suggestedList.map((s, i) => (
@@ -142,7 +153,8 @@ function StartPage() {
                             >
                               {s}
                             </span>
-                          ))}?
+                          ))}
+                          ?
                         </div>
                       )}
                     </li>
@@ -151,6 +163,7 @@ function StartPage() {
               </ul>
             </div>
 
+            {/* Generate Button */}
             <button
               onClick={handleGenerate}
               disabled={isGenerating}

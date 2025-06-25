@@ -15,7 +15,7 @@ function ReviewPage() {
         const res = await api.getTopics();
         setTopics(res.data);
       } catch (err) {
-        console.error("❌ Failed to load topics:", err);
+        console.error("Failed to load topics:", err);
       }
     };
     fetchTopics();
@@ -28,7 +28,7 @@ function ReviewPage() {
       const res = await api.getLearnedWordsByTopic(topicId);
       setWords(res.data);
     } catch (err) {
-      console.error("❌ Failed to load words:", err);
+      console.error("Failed to load words:", err);
     } finally {
       setIsLoading(false);
     }

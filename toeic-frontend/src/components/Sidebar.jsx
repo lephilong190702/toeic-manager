@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom";
 import {
   BookOpenIcon,
   SparklesIcon,
-  HistoryIcon,
+  BarChartIcon ,
 } from "lucide-react";
 
 function Sidebar() {
@@ -37,13 +37,13 @@ function Sidebar() {
       </NavLink>
 
       <NavLink
-        to="/history"
+        to="/stats"
         className={({ isActive }) =>
           `${linkClass} ${isActive ? activeClass : ""}`
         }
       >
-        <HistoryIcon size={20} />
-        History
+        <BarChartIcon size={20} />
+        Statistics
       </NavLink>
     </nav>
   );

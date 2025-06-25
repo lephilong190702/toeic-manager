@@ -1,5 +1,6 @@
 package com.example.toeic.service.impl;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,8 +46,8 @@ public class WordServiceImpl implements WordService {
     @Override
     public List<Word> findWordsByTopic(String name) {
         Topic topic = topicRepository.findByNameIgnoreCase(name)
-        .orElseThrow(() -> new IllegalArgumentException("Topic not found: " + name));
-    return wordRepository.findByTopic(topic);
+                .orElseThrow(() -> new IllegalArgumentException("Topic not found: " + name));
+        return wordRepository.findByTopic(topic);
     }
 
     @Override
@@ -58,7 +59,9 @@ public class WordServiceImpl implements WordService {
     public Word toggleLearned(Long id) {
         Word word = getWordById(id);
         if (word != null) {
-            word.setLearned(!word.isLearned());
+            boolean isNowLearned = !word.isLearned();
+            word.setLearned(isNowLearned);
+            word.setLearnedAt(isNowLearned ? LocalDate.now() : null); 
             return wordRepository.save(word);
         }
         return null;

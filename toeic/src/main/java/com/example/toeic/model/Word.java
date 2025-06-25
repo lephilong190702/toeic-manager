@@ -1,5 +1,7 @@
 package com.example.toeic.model;
 
+import java.time.LocalDate;
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.Column;
@@ -52,6 +54,9 @@ public class Word {
 
     @Column(name = "audio", length = 512)
     private String audioUrl;
+
+    @Column(name = "learned_at")
+    private LocalDate learnedAt;
 
     @ManyToOne
     @JoinColumn(name = "topic_id")

@@ -1,10 +1,7 @@
 package com.example.toeic.service.impl;
 
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,17 +37,18 @@ public class AIPostcardServiceImpl implements AIPostcartService {
     public AIPostcardServiceImpl(
             @Value("${openrouter.api.key}") String apiKey,
             @Value("${openrouter.api.model}") String model,
-            PronunciationService pronunciationService, WordRepository wordRepository, TopicService topicService) {
+            PronunciationService pronunciationService,
+            WordRepository wordRepository,
+            TopicService topicService) {
 
         this.webClient = WebClient.builder()
                 .baseUrl("https://openrouter.ai/api/v1")
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .clientConnector(
-                        new ReactorClientHttpConnector(
-                                HttpClient.create()
-                                        .responseTimeout(Duration.ofSeconds(15))))
+                .clientConnector(new ReactorClientHttpConnector(
+                        HttpClient.create().responseTimeout(Duration.ofSeconds(15))))
                 .build();
+
         this.model = model;
         this.pronunciationService = pronunciationService;
         this.wordRepository = wordRepository;
@@ -58,50 +56,72 @@ public class AIPostcardServiceImpl implements AIPostcartService {
     }
 
     @Override
-    public PostcardData generatePostcard(String word) {
+    public PostcardData generatePostcard(String rawInput) {
         try {
+            String word = rawInput.trim().toLowerCase();
 
-            String normalized = word.trim().toLowerCase();
-
-            Optional<Word> existing = wordRepository.findByVocabularyIgnoreCase(normalized);
+            Optional<Word> existing = wordRepository.findByVocabularyIgnoreCase(word);
             if (existing.isPresent()) {
                 return convertToPostcardData(existing.get());
             }
 
-            String aiContent = fetchAIContent(normalized);
+            String aiContent = fetchAIContent(word);
             PostcardData data = parseAIContent(aiContent);
-            enrichWithPronunciation(data, normalized);
+            enrichWithPronunciation(data, word);
 
-            Word newWord = new Word();
-            newWord.setVocabulary(normalized);
-            newWord.setMeaning(data.getMeaning());
-            newWord.setExample(data.getExample());
-            newWord.setTip(data.getTip());
-            newWord.setPartOfSpeech(data.getPartOfSpeech());
-            Topic topicEntity = topicService.createTopicIfNotExists(data.getTopic());
-            newWord.setTopic(topicEntity);
-            newWord.setLevel(data.getLevel());
-            newWord.setIpa(data.getIpa());
-            newWord.setAudioUrl(data.getAudioUrl());
-            newWord.setLearned(false);
-
+            Word newWord = mapToWordEntity(word, data);
             wordRepository.save(newWord);
             data.setId(newWord.getId());
 
             return data;
         } catch (Exception e) {
-            log.error("Lỗi khi tạo postcard cho từ '{}': {}", word, e.getMessage(), e);
-            PostcardData failed = new PostcardData();
-            failed.setVocabulary(word);
-            failed.setError(true);
-            failed.setErrorMessage("Failed to generate word: " + e.getMessage());
-            return failed;
+            log.error("Error generating postcard for '{}': {}", rawInput, e.getMessage(), e);
+            return errorPostcard(rawInput, e.getMessage());
         }
     }
 
+    @Override
+    public PostcardData regeneratePostcard(Long id) {
+        try {
+            Word word = wordRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Word not found with ID: " + id));
+
+            String vocabulary = word.getVocabulary();
+
+            String aiContent = fetchAIContent(vocabulary);
+            PostcardData data = parseAIContent(aiContent);
+            enrichWithPronunciation(data, vocabulary);
+
+            updateWordEntity(word, data);
+            wordRepository.save(word);
+
+            data.setId(word.getId());
+            data.setVocabulary(vocabulary);
+            return data;
+        } catch (Exception e) {
+            log.error("❌ Error regenerating postcard: {}", e.getMessage(), e);
+            return errorPostcard(null, e.getMessage());
+        }
+    }
+
+    @Override
+    public List<PostcardData> generatePostcards(List<String> words) {
+        return words.stream()
+                .map(word -> {
+                    PostcardData data = generatePostcard(word);
+                    if (data.getVocabulary() == null || data.getVocabulary().isBlank()) {
+                        data.setVocabulary(word);
+                    }
+                    return data;
+                })
+                .collect(Collectors.toList());
+    }
+
     private String fetchAIContent(String word) {
-        String prompt = buildPrompt(word);
-        Map<String, Object> requestBody = buildRequestBody(prompt);
+        Map<String, Object> requestBody = Map.of(
+                "model", model,
+                "messages", List.of(Map.of("role", "user", "content", buildPrompt(word))),
+                "temperature", 0.7);
 
         Map<?, ?> response = webClient.post()
                 .uri("/chat/completions")
@@ -110,60 +130,25 @@ public class AIPostcardServiceImpl implements AIPostcartService {
                 .bodyToMono(Map.class)
                 .block();
 
-        return extractContent(response);
+        return extractContentFromResponse(response);
     }
 
     private String buildPrompt(String word) {
         return String.format(
-                "You are an English vocabulary teacher. For the word '%s', provide the following information in exactly one line:\n"
-                        + "1. A simple English definition (do NOT write \"meaning\", just the definition),\n"
-                        + "2. A short example sentence using the word,\n"
-                        + "3. A short tip that helps remember the word meaning through real-life usage, memory tricks, or word parts,\n"
-                        + "4. The part of speech (noun, verb, adjective, etc.),\n"
-                        + "5. A TOEIC-relevant topic (e.g., Business, Office, Communication),\n"
-                        + "6. A difficulty level (easy, medium, hard).\n\n"
-                        + "Return your response in this exact format and order:\n"
-                        + "[definition] | [example sentence] | [tip] | [part of speech] | [topic] | [level]\n\n"
-                        + "Do not add labels, line breaks, quotation marks, or any prefix",
+                "You are an English vocabulary teacher. For the word '%s', provide the following in one line:\n" +
+                        "1. A simple English definition\n" +
+                        "2. A short example sentence\n" +
+                        "3. A tip to remember the word\n" +
+                        "4. The part of speech\n" +
+                        "5. A TOEIC-relevant topic\n" +
+                        "6. A difficulty level\n\n" +
+                        "Return in this format:\n" +
+                        "[definition] | [example] | [tip] | [part of speech] | [topic] | [level]\n" +
+                        "Do NOT include labels or extra formatting.",
                 word);
     }
 
-    private Map<String, Object> buildRequestBody(String prompt) {
-        return Map.of(
-                "model", model,
-                "messages", List.of(Map.of("role", "user", "content", prompt)),
-                "temperature", 0.7);
-    }
-
-    private PostcardData parseAIContent(String content) {
-        String[] parts = content.split("\\|");
-        return new PostcardData(
-                getPart(parts, 0),
-                getPart(parts, 1),
-                getPart(parts, 2),
-                getPart(parts, 3),
-                getPart(parts, 4),
-                getPart(parts, 5));
-    }
-
-    private void enrichWithPronunciation(PostcardData data, String word) {
-        String[] pronunciation = pronunciationService.getIpaAndAudio(word);
-        data.setIpa(pronunciation[0]);
-        data.setAudioUrl(pronunciation[1]);
-    }
-
-    private String getPart(String[] parts, int index) {
-        return (parts.length > index && parts[index] != null) ? parts[index].trim() : "";
-    }
-
-    private PostcardData fallbackPostcard() {
-        return new PostcardData(
-                null, "", "No meaning", "No example", "No tip",
-                "No part of speech", "No topic", "No level",
-                "No ipa", "No audio", true, "");
-    }
-
-    private String extractContent(Map<?, ?> response) {
+    private String extractContentFromResponse(Map<?, ?> response) {
         try {
             List<?> choices = (List<?>) response.get("choices");
             if (choices == null || choices.isEmpty())
@@ -173,20 +158,52 @@ public class AIPostcardServiceImpl implements AIPostcartService {
             Map<?, ?> message = (Map<?, ?>) choice.get("message");
             return message.get("content").toString();
         } catch (Exception e) {
-            log.warn("Không thể trích xuất content từ response: {}", e.getMessage());
+            log.warn("⚠️ Cannot extract AI content: {}", e.getMessage());
             return "";
         }
     }
 
-    @Override
-    public List<PostcardData> generatePostcards(List<String> words) {
-        return words.stream()
-                .map(word -> {
-                    PostcardData data = generatePostcard(word);
-                    data.setVocabulary(word);
-                    return data;
-                })
-                .collect(Collectors.toList());
+    private PostcardData parseAIContent(String content) {
+        String[] parts = content.split("\\|");
+        return new PostcardData(
+                safePart(parts, 0),
+                safePart(parts, 1),
+                safePart(parts, 2),
+                safePart(parts, 3),
+                safePart(parts, 4),
+                safePart(parts, 5));
+    }
+
+    private void enrichWithPronunciation(PostcardData data, String word) {
+        String[] pronunciation = pronunciationService.getIpaAndAudio(word);
+        data.setIpa(pronunciation[0]);
+        data.setAudioUrl(pronunciation[1]);
+    }
+
+    private Word mapToWordEntity(String word, PostcardData data) {
+        Word entity = new Word();
+        entity.setVocabulary(word);
+        entity.setMeaning(data.getMeaning());
+        entity.setExample(data.getExample());
+        entity.setTip(data.getTip());
+        entity.setPartOfSpeech(data.getPartOfSpeech());
+        entity.setTopic(topicService.createTopicIfNotExists(data.getTopic()));
+        entity.setLevel(data.getLevel());
+        entity.setIpa(data.getIpa());
+        entity.setAudioUrl(data.getAudioUrl());
+        entity.setLearned(false);
+        return entity;
+    }
+
+    private void updateWordEntity(Word word, PostcardData data) {
+        word.setMeaning(data.getMeaning());
+        word.setExample(data.getExample());
+        word.setTip(data.getTip());
+        word.setPartOfSpeech(data.getPartOfSpeech());
+        word.setTopic(topicService.createTopicIfNotExists(data.getTopic()));
+        word.setLevel(data.getLevel());
+        word.setIpa(data.getIpa());
+        word.setAudioUrl(data.getAudioUrl());
     }
 
     private PostcardData convertToPostcardData(Word word) {
@@ -197,55 +214,22 @@ public class AIPostcardServiceImpl implements AIPostcartService {
         data.setExample(word.getExample());
         data.setTip(word.getTip());
         data.setPartOfSpeech(word.getPartOfSpeech());
-        data.setTopic(word.getTopic() != null ? word.getTopic().getName() : "");
-        data.setLevel(word.getLevel());
+        data.setTopic(Optional.ofNullable(word.getTopic()).map(Topic::getName).orElse(""));
+        data.setLevel(Optional.ofNullable(word.getLevel()).orElse("unknown").toLowerCase());
         data.setIpa(word.getIpa());
         data.setAudioUrl(word.getAudioUrl());
         return data;
     }
 
-    @Override
-    public PostcardData regeneratePostcard(Long id) {
-        try {
-            Word updateWord = wordRepository.findById(id).orElse(null);
-            if (updateWord == null) {
-                throw new IllegalArgumentException("Word not found with ID: " + id);
-            }
+    private PostcardData errorPostcard(String vocab, String message) {
+        PostcardData error = new PostcardData();
+        error.setVocabulary(vocab);
+        error.setError(true);
+        error.setErrorMessage("Failed to process word: " + message);
+        return error;
+    }
 
-            String vocabulary = updateWord.getVocabulary();
-
-            // Gọi AI sinh nội dung mới
-            String aiContent = fetchAIContent(vocabulary);
-            PostcardData data = parseAIContent(aiContent);
-            enrichWithPronunciation(data, vocabulary);
-
-            // Ghi đè nội dung cũ
-            updateWord.setMeaning(data.getMeaning());
-            updateWord.setExample(data.getExample());
-            updateWord.setTip(data.getTip());
-            updateWord.setPartOfSpeech(data.getPartOfSpeech());
-            Topic topicEntity = topicService.createTopicIfNotExists(data.getTopic());
-            updateWord.setTopic(topicEntity);
-
-            updateWord.setLevel(data.getLevel());
-            updateWord.setIpa(data.getIpa());
-            updateWord.setAudioUrl(data.getAudioUrl());
-
-            // Ghi đè vào database
-            wordRepository.save(updateWord);
-
-            // Cập nhật lại ID cho PostcardData
-            data.setId(updateWord.getId());
-            data.setVocabulary(vocabulary); // cần có từ vựng để frontend hiển thị
-
-            return data;
-
-        } catch (Exception e) {
-            log.error("❌ Lỗi khi regenerate postcard cho '{}': {}", e.getMessage(), e);
-            PostcardData failed = new PostcardData();
-            failed.setError(true);
-            failed.setErrorMessage("Failed to regenerate word: " + e.getMessage());
-            return failed;
-        }
+    private String safePart(String[] parts, int index) {
+        return (parts.length > index && parts[index] != null) ? parts[index].trim() : "";
     }
 }
