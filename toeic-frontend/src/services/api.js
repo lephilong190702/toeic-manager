@@ -20,6 +20,7 @@ export const updateWord = (id, updatedWord) => api.put(`/words/${id}`, updatedWo
 export const deleteWord = (id) => api.delete(`/words/${id}`);
 export const toggleLearned = (id) => api.patch(`/words/learned/${id}`);
 export const regeneratePostcard = (id) => api.put(`/words/${id}/regenerate`);
+export const getUnlearned = () => api.get("/words/unlearned");
 
 // === TOPICS ===
 export const getTopics = () => api.get("/topics");
@@ -44,5 +45,6 @@ export default {
   getTopics,
   getLearnedWordsByTopic,
   getStats,
-  getStatsHistory
+  getStatsHistory,
+  getUnlearned
 };

@@ -2,6 +2,7 @@ package com.example.toeic.service;
 
 import java.util.List;
 
+import com.example.toeic.dto.PostcardData;
 import com.example.toeic.model.Word;
 
 public interface WordService {
@@ -13,4 +14,6 @@ public interface WordService {
     List<Word> findWordsByTopic(String topic);
     List<Word> findWordsByLevel(String level);
     Word toggleLearned(Long id);
+    List<Word> getUnlearnedWords();
+    List<PostcardData> getUnlearnedPostcards();
 }

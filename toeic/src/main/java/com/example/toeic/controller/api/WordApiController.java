@@ -51,17 +51,17 @@ public class WordApiController {
     // // POST /api/words
     // @PostMapping
     // public ResponseEntity<Word> saveWord(@RequestBody Word word) {
-    //     PostcardData data = aiPostcardService.generatePostcard(word.getVocabulary());
-    //     word.setMeaning(data.getMeaning());
-    //     word.setExample(data.getExample());
-    //     word.setTip(data.getTip());
-    //     word.setPartOfSpeech(data.getPartOfSpeech());
-    //     word.setLevel(data.getLevel());
-    //     word.setTopic(data.getTopic());
-    //     word.setIpa(data.getIpa());
-    //     word.setAudioUrl(data.getAudioUrl());
-    //     Word savedWord = wordService.saveWord(word);
-    //     return ResponseEntity.status(HttpStatus.CREATED).body(savedWord);
+    // PostcardData data = aiPostcardService.generatePostcard(word.getVocabulary());
+    // word.setMeaning(data.getMeaning());
+    // word.setExample(data.getExample());
+    // word.setTip(data.getTip());
+    // word.setPartOfSpeech(data.getPartOfSpeech());
+    // word.setLevel(data.getLevel());
+    // word.setTopic(data.getTopic());
+    // word.setIpa(data.getIpa());
+    // word.setAudioUrl(data.getAudioUrl());
+    // Word savedWord = wordService.saveWord(word);
+    // return ResponseEntity.status(HttpStatus.CREATED).body(savedWord);
     // }
 
     // POST /api/words/generate-batch
@@ -109,4 +109,15 @@ public class WordApiController {
         wordService.deleteWord(id);
         return ResponseEntity.noContent().build();
     }
+
+    // GET /api/words/{id}
+    @GetMapping("/unlearned")
+    public ResponseEntity<List<PostcardData>> getUnlearnedWords() {
+        List<PostcardData> words = wordService.getUnlearnedPostcards();
+        if (words.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(words);
+    }
+
 }

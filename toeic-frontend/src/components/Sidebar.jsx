@@ -2,7 +2,8 @@ import { NavLink } from "react-router-dom";
 import {
   BookOpenIcon,
   SparklesIcon,
-  BarChartIcon ,
+  BarChartIcon,
+  BrainIcon
 } from "lucide-react";
 
 function Sidebar() {
@@ -27,6 +28,16 @@ function Sidebar() {
       </NavLink>
 
       <NavLink
+        to="/new"
+        className={({ isActive }) =>
+          `${linkClass} ${isActive ? activeClass : ""}`
+        }
+      >
+        <BrainIcon size={20} />
+        New Words
+      </NavLink>
+
+      <NavLink
         to="/review"
         className={({ isActive }) =>
           `${linkClass} ${isActive ? activeClass : ""}`
@@ -45,6 +56,8 @@ function Sidebar() {
         <BarChartIcon size={20} />
         Statistics
       </NavLink>
+
+
     </nav>
   );
 }

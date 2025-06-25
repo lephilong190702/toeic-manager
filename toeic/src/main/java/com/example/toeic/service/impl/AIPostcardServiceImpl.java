@@ -135,16 +135,26 @@ public class AIPostcardServiceImpl implements AIPostcartService {
 
     private String buildPrompt(String word) {
         return String.format(
-                "You are an English vocabulary teacher. For the word '%s', provide the following in one line:\n" +
-                        "1. A simple English definition\n" +
-                        "2. A short example sentence\n" +
-                        "3. A tip to remember the word\n" +
-                        "4. The part of speech\n" +
-                        "5. A TOEIC-relevant topic\n" +
-                        "6. A difficulty level\n\n" +
-                        "Return in this format:\n" +
-                        "[definition] | [example] | [tip] | [part of speech] | [topic] | [level]\n" +
-                        "Do NOT include labels or extra formatting.",
+                """
+                        You are an English vocabulary teacher.
+
+                        For the word '%s', provide exactly the following six fields, separated **by a single pipe symbol `|`**:
+
+                        1. A **simple English definition** of the word (no more than 20 words).
+                        2. A short and clear **example sentence** (in real-life context).
+                        3. A **memory tip** (fun or visual idea to remember the word).
+                        4. The **part of speech** (noun, verb, adjective, etc).
+                        5. A **TOEIC-related topic** (choose from: Business, Communication, Daily Life, Directions, Education, Entertainment, Food And Drink, Health, Home, Technology, Travel, Shopping, Office).
+                        6. The **difficulty level** (choose only from: Easy, Medium, Hard).
+
+                        Output format (exactly one line):
+                        [definition] | [example] | [tip] | [part of speech] | [topic] | [level]
+
+                        Do NOT include labels like "Definition:" or extra punctuation.
+                        Do NOT use commas `,` or slashes `/` inside values. Only use the pipe `|` to separate fields.
+
+                        Make sure your response follows the exact format, in the exact order.
+                        """,
                 word);
     }
 

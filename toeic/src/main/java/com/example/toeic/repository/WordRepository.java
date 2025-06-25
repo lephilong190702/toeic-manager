@@ -25,6 +25,8 @@ public interface WordRepository extends JpaRepository<Word, Long> {
     long countByLearnedTrue();
 
     long countByLearnedFalse();
+    
+    List<Word> findByLearnedFalse();
 
     @Query("SELECT w.level AS level, COUNT(w) AS count FROM Word w GROUP BY w.level")
     List<Map<String, Object>> countGroupByLevel();

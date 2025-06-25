@@ -2,10 +2,12 @@ package com.example.toeic.service.impl;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.example.toeic.dto.PostcardData;
 import com.example.toeic.model.Topic;
 import com.example.toeic.model.Word;
 import com.example.toeic.repository.TopicRepository;
@@ -61,7 +63,7 @@ public class WordServiceImpl implements WordService {
         if (word != null) {
             boolean isNowLearned = !word.isLearned();
             word.setLearned(isNowLearned);
-            word.setLearnedAt(isNowLearned ? LocalDate.now() : null); 
+            word.setLearnedAt(isNowLearned ? LocalDate.now() : null);
             return wordRepository.save(word);
         }
         return null;
@@ -81,6 +83,34 @@ public class WordServiceImpl implements WordService {
             return wordRepository.save(word);
         }
         return null;
+    }
+
+    @Override
+    public List<Word> getUnlearnedWords() {
+        return wordRepository.findByLearnedFalse();
+    }
+
+    @Override
+    public List<PostcardData> getUnlearnedPostcards() {
+        return wordRepository.findByLearnedFalse().stream()
+                .map(this::convertToPostcardData)
+                .collect(Collectors.toList());
+    }
+
+    private PostcardData convertToPostcardData(Word word) {
+        PostcardData data = new PostcardData();
+        data.setId(word.getId());
+        data.setVocabulary(word.getVocabulary());
+        data.setMeaning(word.getMeaning());
+        data.setExample(word.getExample());
+        data.setTip(word.getTip());
+        data.setPartOfSpeech(word.getPartOfSpeech());
+        data.setTopic(word.getTopic() != null ? word.getTopic().getName() : "");
+        data.setLevel(word.getLevel());
+        data.setIpa(word.getIpa());
+        data.setAudioUrl(word.getAudioUrl());
+        data.setError(false);
+        return data;
     }
 
 }

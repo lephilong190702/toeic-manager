@@ -1,13 +1,22 @@
-// FlashcardSlider.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PostcardView from "./PostcardView";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { regeneratePostcard, toggleLearned } from "../services/api";
 
-function FlashcardSlider({ wordList, onRefreshStats, onRefreshHistory }) {
+function FlashcardSlider({ wordList = [], onRefreshStats, onRefreshHistory }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [flipSignal, setFlipSignal] = useState(0);
-  const [wordListState, setWordListState] = useState(wordList);
+  const [wordListState, setWordListState] = useState([]);
+
+  useEffect(() => {
+    setWordListState(wordList);
+  }, [wordList]);
+
+  if (!Array.isArray(wordListState) || wordListState.length === 0) {
+    return <p className="text-center text-gray-500 py-8">No flashcards available.</p>;
+  }
+
+  const currentWord = wordListState[currentIndex] || wordListState[0];
 
   const updateWordInList = (id, updatedFields) => {
     setWordListState((prevList) =>
@@ -20,7 +29,12 @@ function FlashcardSlider({ wordList, onRefreshStats, onRefreshHistory }) {
   const handleMarkLearned = async (id) => {
     try {
       await toggleLearned(id);
-      updateWordInList(id, { learned: !wordListState.find(w => w.id === id)?.learned });
+      setWordListState((prev) => {
+        const updated = prev.filter((w) => w.id !== id);
+        const nextIndex = Math.min(currentIndex, updated.length - 1);
+        setCurrentIndex(nextIndex);
+        return updated;
+      });
       onRefreshStats?.();
       onRefreshHistory?.();
     } catch (err) {
@@ -57,8 +71,6 @@ function FlashcardSlider({ wordList, onRefreshStats, onRefreshHistory }) {
       return newIndex;
     });
   };
-
-  const currentWord = wordListState[currentIndex];
 
   return (
     <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative bg-gradient-to-br from-blue-100 to-white shadow-lg rounded-xl overflow-y-auto min-h-[680px] flex justify-center items-center">
