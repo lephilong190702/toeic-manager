@@ -1,52 +1,38 @@
 # 📝 TOEIC Vocabulary Manager
 
-AI-powered web app to manage and learn TOEIC vocabulary using flashcards.
+An AI-powered web app to manage and learn TOEIC vocabulary using smart flashcards and interactive review.
+
+---
 
 ## 🚀 Features
 
-- ✏️ Add / Edit / Delete words
-- 🧠 Auto-generate flashcards (meaning, IPA, example, tip)
-- 📋 Batch input multiple words
-- 🎯 Filter by topic, level, part of speech
-- ✅ Mark as learned & review later
-- 🔁 Flashcard view (flip, audio, regenerate)
-- 🤖 Spelling suggestions (Levenshtein distance)
+- ✏️ **Add / Edit / Delete** words with custom input
+- 🧠 **Auto-generate flashcards** (meaning, IPA, example, tip) using AI
+- 📋 **Batch input** multiple words at once
+- 🤖 **Spelling suggestions** using Levenshtein distance
+- ✅ **Mark as learned** and review later
+- 🔁 **Flashcard view** with flip animation, audio, and regenerate options
+- 🎯 **Filter words** by topic, level, part of speech
+- 📈 **Learning stats** (learned/unlearned, history by week/month/year)
+- 🪄 **AI Integration**
+  - Uses [OpenRouter.ai](https://openrouter.ai/) as backend
+  - Only saves words with successful AI generation
+  - Regeneration updates content without changing ID
+  - Real-time progress display during batch generation
 
-## 🧠 AI Integration
-
-- Uses [OpenRouter.ai](https://openrouter.ai)
-- Only saves words with successful generation
-- Regenerate updates content without changing ID
-- Progress feedback during batch generation
+---
 
 ## 🧰 Tech Stack
 
-### Backend
-- Spring Boot + WebFlux + JPA
-- MySQL
-- Lombok, Maven
+### 🔙 Backend
+- Java + Spring Boot (REST + WebFlux)
+- JPA (Hibernate) + MySQL
+- Lombok + Maven
+- OpenRouter.ai API integration
 
-### Frontend
-- React (Vite)
-- TailwindCSS, Axios
+### 🔜 Frontend
+- ReactJS (Vite)
+- TailwindCSS
+- Axios for API calls
 - React Context API
-- `js-levenshtein`
-
-## ▶️ Usage
-
-```bash
-# Backend
-cd toeic
-./mvnw spring-boot:run
-
-# properties
-openrouter.api.key=YOUR_KEY
-spring.datasource.url=jdbc:mysql://localhost:3306/toeic_vocab
-
-# Frontend
-cd frontend
-npm install
-npm run dev
-
-
-
+- `js-levenshtein` for spelling suggestions
