@@ -3,7 +3,7 @@ import PostcardView from "./PostcardView";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { regeneratePostcard, toggleLearned } from "../services/api";
 
-function FlashcardSlider({ wordList = [], onRefreshStats, onRefreshHistory }) {
+function FlashcardSlider({ wordList = [], onRefreshStats, onRefreshHistory, mode = "default" }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [flipSignal, setFlipSignal] = useState(0);
   const [wordListState, setWordListState] = useState([]);
@@ -29,12 +29,20 @@ function FlashcardSlider({ wordList = [], onRefreshStats, onRefreshHistory }) {
   const handleMarkLearned = async (id) => {
     try {
       await toggleLearned(id);
+
       setWordListState((prev) => {
-        const updated = prev.filter((w) => w.id !== id);
-        const nextIndex = Math.min(currentIndex, updated.length - 1);
-        setCurrentIndex(nextIndex);
-        return updated;
+        if (mode === "new") {
+          const updated = prev.filter((w) => w.id !== id);
+          const nextIndex = Math.min(currentIndex, updated.length - 1);
+          setCurrentIndex(nextIndex);
+          return updated;
+        } else {
+          return prev.map((w) =>
+            w.id === id ? { ...w, learned: true } : w
+          );
+        }
       });
+
       onRefreshStats?.();
       onRefreshHistory?.();
     } catch (err) {

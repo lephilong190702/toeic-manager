@@ -78,7 +78,7 @@ function StartPage() {
   if (generatedList.length > 0) {
     return (
       <div className="w-full min-h-screen bg-gradient-to-br from-blue-100 to-white flex items-center justify-center p-4">
-        <FlashcardSlider wordList={generatedList} />
+        <FlashcardSlider wordList={generatedList} mode="learning" />
       </div>
     );
   }

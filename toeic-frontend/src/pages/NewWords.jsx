@@ -40,7 +40,7 @@ function NewWords() {
             <span>Loading new words...</span>
           </div>
         ) : words.length > 0 ? (
-          <FlashcardSlider wordList={words} />
+          <FlashcardSlider wordList={words} mode="new"  />
         ) : (
           <div className="text-center text-gray-400 text-base">
             ✅ You’ve learned all available words! Nothing new to study.
