@@ -7,8 +7,5 @@ WORKDIR /app
 # Copy source code vào container
 COPY . .
 
-# Build ứng dụng
-RUN ./mvn clean package -DskipTests
-
 # Chạy ứng dụng Spring Boot
 CMD ["java", "-jar", "target/toeic-0.0.1-SNAPSHOT.jar"]
