@@ -72,3 +72,23 @@ toeic-manager/
 │   └── App.jsx               # Main React app entry
 │
 └── README.md                 # Project documentation
+```
+---
+## 🏁 Getting Started
+
+Make sure you have:
+- **Java 17+**, **Maven**, **Node.js 18+**, and **MySQL** installed and running.
+
+### Run the whole app locally:
+# Backend
+```bash
+cd toeic
+./mvnw spring-boot:run
+```
+
+# Frontend
+```bash
+cd toeic-frontend
+npm install
+npm run dev
+
