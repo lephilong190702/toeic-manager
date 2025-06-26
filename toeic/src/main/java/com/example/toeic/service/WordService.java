@@ -3,6 +3,7 @@ package com.example.toeic.service;
 import java.util.List;
 
 import com.example.toeic.dto.PostcardData;
+import com.example.toeic.model.User;
 import com.example.toeic.model.Word;
 
 public interface WordService {
@@ -16,4 +17,8 @@ public interface WordService {
     Word toggleLearned(Long id);
     List<Word> getUnlearnedWords();
     List<PostcardData> getUnlearnedPostcards();
+    List<Word> getWordsByUser(User user);
+    List<PostcardData> getUnlearnedPostcardsForUser(User user);
+    List<PostcardData> getLearnedPostcardsForUser(User user);
+    List<PostcardData> getLearnedPostcardsByUserAndTopic(User user, String topic);
 }

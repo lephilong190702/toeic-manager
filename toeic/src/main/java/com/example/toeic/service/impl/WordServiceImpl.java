@@ -2,6 +2,7 @@ package com.example.toeic.service.impl;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,9 +10,11 @@ import org.springframework.stereotype.Service;
 
 import com.example.toeic.dto.PostcardData;
 import com.example.toeic.model.Topic;
+import com.example.toeic.model.User;
 import com.example.toeic.model.Word;
 import com.example.toeic.repository.TopicRepository;
 import com.example.toeic.repository.WordRepository;
+import com.example.toeic.service.AuthService;
 import com.example.toeic.service.WordService;
 
 @Service
@@ -20,6 +23,9 @@ public class WordServiceImpl implements WordService {
 
     @Autowired
     private TopicRepository topicRepository;
+
+    @Autowired
+    private AuthService authService;
 
     public WordServiceImpl(WordRepository wordRepository) {
         this.wordRepository = wordRepository;
@@ -60,6 +66,9 @@ public class WordServiceImpl implements WordService {
     @Override
     public Word toggleLearned(Long id) {
         Word word = getWordById(id);
+        if (word == null || !word.getUser().getId().equals(authService.getCurrentUser().getId())) {
+            throw new RuntimeException("Unauthorized or word not found");
+        }
         if (word != null) {
             boolean isNowLearned = !word.isLearned();
             word.setLearned(isNowLearned);
@@ -72,9 +81,11 @@ public class WordServiceImpl implements WordService {
     @Override
     public Word updateWord(Long id, Word updateWord) {
         Word word = wordRepository.findById(id).orElse(null);
+        if (word == null || !word.getUser().getId().equals(authService.getCurrentUser().getId())) {
+            throw new RuntimeException("Unauthorized or word not found");
+        }
         if (updateWord != null) {
             word.setVocabulary(updateWord.getVocabulary());
-            ;
             word.setMeaning(updateWord.getMeaning());
             word.setPartOfSpeech(updateWord.getPartOfSpeech());
             word.setTopic(updateWord.getTopic());
@@ -113,4 +124,36 @@ public class WordServiceImpl implements WordService {
         return data;
     }
 
+    @Override
+    public List<Word> getWordsByUser(User user) {
+        return wordRepository.findByUser(user);
+    }
+
+    @Override
+    public List<PostcardData> getUnlearnedPostcardsForUser(User user) {
+        return wordRepository.findByLearnedFalseAndUser(user).stream()
+                .map(this::convertToPostcardData)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<PostcardData> getLearnedPostcardsForUser(User user) {
+        return wordRepository.findByLearnedTrueAndUser(user).stream()
+                .map(this::convertToPostcardData)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<PostcardData> getLearnedPostcardsByUserAndTopic(User user, String topic) {
+        List<Word> words;
+        if (topic == null || topic.isBlank()) {
+            words = wordRepository.findByLearnedTrueAndUser(user);
+        } else {
+            words = wordRepository.findByLearnedTrueAndUserAndTopic_NameIgnoreCase(user, topic.trim());
+        }
+
+        return words.stream()
+                .map(this::convertToPostcardData)
+                .collect(Collectors.toList());
+    }
 }

@@ -3,6 +3,7 @@ package com.example.toeic.model;
 import java.time.LocalDate;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -60,7 +61,12 @@ public class Word {
 
     @ManyToOne
     @JoinColumn(name = "topic_id")
-    @JsonBackReference
+    @JsonIgnore
     private Topic topic;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    @JsonIgnore
+    private User user;
 
 }

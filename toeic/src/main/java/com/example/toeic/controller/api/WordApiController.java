@@ -15,11 +15,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.toeic.dto.PostcardData;
+import com.example.toeic.model.User;
 import com.example.toeic.model.Word;
 import com.example.toeic.service.AIPostcartService;
+import com.example.toeic.service.AuthService;
 import com.example.toeic.service.WordService;
 
 @RestController
@@ -29,12 +32,14 @@ public class WordApiController {
     @Autowired
     private WordService wordService;
     @Autowired
+    private AuthService authService;
+    @Autowired
     private AIPostcartService aiPostcardService;
 
     // GET /api/words
     @GetMapping
     public ResponseEntity<List<Word>> getAllWords() {
-        List<Word> words = wordService.getAllWords();
+        List<Word> words = wordService.getWordsByUser(authService.getCurrentUser());
         return ResponseEntity.ok(words);
     }
 
@@ -42,27 +47,15 @@ public class WordApiController {
     @GetMapping("/{id}")
     public ResponseEntity<Word> getWordById(@PathVariable Long id) {
         Word word = wordService.getWordById(id);
+        User currentUser = authService.getCurrentUser();
         if (word == null) {
             return ResponseEntity.notFound().build();
         }
+        if (!word.getUser().getId().equals(currentUser.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.ok(word);
     }
-
-    // // POST /api/words
-    // @PostMapping
-    // public ResponseEntity<Word> saveWord(@RequestBody Word word) {
-    // PostcardData data = aiPostcardService.generatePostcard(word.getVocabulary());
-    // word.setMeaning(data.getMeaning());
-    // word.setExample(data.getExample());
-    // word.setTip(data.getTip());
-    // word.setPartOfSpeech(data.getPartOfSpeech());
-    // word.setLevel(data.getLevel());
-    // word.setTopic(data.getTopic());
-    // word.setIpa(data.getIpa());
-    // word.setAudioUrl(data.getAudioUrl());
-    // Word savedWord = wordService.saveWord(word);
-    // return ResponseEntity.status(HttpStatus.CREATED).body(savedWord);
-    // }
 
     // POST /api/words/generate-batch
     @PostMapping("/generate-batch")
@@ -77,16 +70,15 @@ public class WordApiController {
 
     @PutMapping("/{id}/regenerate")
     public ResponseEntity<PostcardData> regeneratePostcard(@PathVariable Long id) {
+        Word word = wordService.getWordById(id);
+        User currentUser = authService.getCurrentUser();
+        if (word == null || !word.getUser().getId().equals(currentUser.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         PostcardData regenerated = aiPostcardService.regeneratePostcard(id);
         return ResponseEntity.ok(regenerated);
     }
 
-    // PUT /api/words/{id}
-    @PutMapping("/{id}")
-    public ResponseEntity<Word> updateWord(@PathVariable Long id, @RequestBody Word updatedWord) {
-        Word word = wordService.updateWord(id, updatedWord);
-        return ResponseEntity.ok(word);
-    }
 
     // PATCH /api/words/learned/{id}
     @PatchMapping("/learned/{id}")
@@ -99,23 +91,23 @@ public class WordApiController {
         return ResponseEntity.ok(word);
     }
 
-    // DELETE /api/words/{id}
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteWord(@PathVariable Long id) {
-        Word word = wordService.getWordById(id);
-        if (word == null) {
-            return ResponseEntity.notFound().build();
-        }
-        wordService.deleteWord(id);
-        return ResponseEntity.noContent().build();
-    }
 
-    // GET /api/words/{id}
     @GetMapping("/unlearned")
     public ResponseEntity<List<PostcardData>> getUnlearnedWords() {
-        List<PostcardData> words = wordService.getUnlearnedPostcards();
+        User user = authService.getCurrentUser();
+        List<PostcardData> words = wordService.getUnlearnedPostcardsForUser(user);
         if (words.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.noContent().build(); // 204 No Content
+        }
+        return ResponseEntity.ok(words);
+    }
+
+    @GetMapping("/learned-by-topic")
+    public ResponseEntity<List<PostcardData>> getLearnedWordsByTopic(@RequestParam(required = false) String topic) {
+        User user = authService.getCurrentUser();
+        List<PostcardData> words = wordService.getLearnedPostcardsByUserAndTopic(user, topic);
+        if (words.isEmpty()) {
+            return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(words);
     }

@@ -14,9 +14,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import com.example.toeic.dto.PostcardData;
 import com.example.toeic.model.Topic;
+import com.example.toeic.model.User;
 import com.example.toeic.model.Word;
 import com.example.toeic.repository.WordRepository;
 import com.example.toeic.service.AIPostcartService;
+import com.example.toeic.service.AuthService;
 import com.example.toeic.service.PronunciationService;
 import com.example.toeic.service.TopicService;
 
@@ -32,6 +34,9 @@ public class AIPostcardServiceImpl implements AIPostcartService {
     private final PronunciationService pronunciationService;
     private final WordRepository wordRepository;
     private final TopicService topicService;
+
+    @Autowired
+    private AuthService authService;
 
     @Autowired
     public AIPostcardServiceImpl(
@@ -70,6 +75,8 @@ public class AIPostcardServiceImpl implements AIPostcartService {
             enrichWithPronunciation(data, word);
 
             Word newWord = mapToWordEntity(word, data);
+            User user = authService.getCurrentUser();
+            newWord.setUser(user);
             wordRepository.save(newWord);
             data.setId(newWord.getId());
 

@@ -27,6 +27,7 @@ function FlashcardSlider({ wordList = [], onRefreshStats, onRefreshHistory, mode
   };
 
   const handleMarkLearned = async (id) => {
+    if (mode === "review") return;
     try {
       await toggleLearned(id);
 
@@ -81,36 +82,33 @@ function FlashcardSlider({ wordList = [], onRefreshStats, onRefreshHistory, mode
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative bg-gradient-to-br from-blue-100 to-white shadow-lg rounded-xl overflow-y-auto min-h-[680px] flex justify-center items-center">
-      <div className="relative w-full max-w-xl">
-        {/* Previous button */}
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative bg-gradient-to-br from-indigo-100 via-white to-indigo-50 shadow-2xl rounded-3xl min-h-[700px] flex justify-center items-center">
+      <div className="relative w-full max-w-2xl">
         <button
           onClick={goToPrevious}
-          className="absolute -left-10 top-1/2 transform -translate-y-1/2 bg-white border shadow p-3 rounded-full hover:bg-gray-100 transition z-10"
+          className="absolute -left-12 top-1/2 transform -translate-y-1/2 bg-white border border-indigo-200 shadow-lg p-3 rounded-full hover:bg-indigo-100 transition-all duration-300 z-10"
           title="Previous"
         >
-          <ChevronLeft size={28} className="text-gray-700" />
+          <ChevronLeft size={28} className="text-indigo-600" />
         </button>
 
-        {/* Flashcard */}
         <PostcardView
           word={currentWord}
           resetFlipSignal={flipSignal}
           onMarkLearned={handleMarkLearned}
           onRegenerate={handleRegenerate}
+          mode={mode}
         />
 
-        {/* Next button */}
         <button
           onClick={goToNext}
-          className="absolute -right-10 top-1/2 transform -translate-y-1/2 bg-white border shadow p-3 rounded-full hover:bg-gray-100 transition z-10"
+          className="absolute -right-12 top-1/2 transform -translate-y-1/2 bg-white border border-indigo-200 shadow-lg p-3 rounded-full hover:bg-indigo-100 transition-all duration-300 z-10"
           title="Next"
         >
-          <ChevronRight size={28} className="text-gray-700" />
+          <ChevronRight size={28} className="text-indigo-600" />
         </button>
 
-        {/* Slide indicator */}
-        <div className="absolute -bottom-10 w-full text-center text-sm text-gray-500">
+        <div className="absolute -bottom-10 w-full text-center text-sm text-indigo-500 font-medium">
           Flashcard {currentIndex + 1} / {wordListState.length}
         </div>
       </div>

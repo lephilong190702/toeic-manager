@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.example.toeic.dto.DailyLearningStats;
 import com.example.toeic.model.Topic;
+import com.example.toeic.model.User;
 import com.example.toeic.model.Word;
 
 public interface WordRepository extends JpaRepository<Word, Long> {
@@ -22,39 +23,53 @@ public interface WordRepository extends JpaRepository<Word, Long> {
 
     List<Word> findByTopicIdAndLearnedTrue(Long topicId);
 
-    long countByLearnedTrue();
+    long countByUserAndLearnedTrue(User user);
 
-    long countByLearnedFalse();
-    
+    long countByUserAndLearnedFalse(User user);
+
     List<Word> findByLearnedFalse();
 
-    @Query("SELECT w.level AS level, COUNT(w) AS count FROM Word w GROUP BY w.level")
-    List<Map<String, Object>> countGroupByLevel();
+    @Query("SELECT w.level AS level, COUNT(w) AS count FROM Word w WHERE w.user = :user GROUP BY w.level")
+    List<Object[]> countGroupByLevel(User user);
 
-    @Query("SELECT w.topic.name AS topic, COUNT(w) AS count FROM Word w GROUP BY w.topic.name")
-    List<Map<String, Object>> countGroupByTopic();
+    @Query("SELECT w.topic.name AS topic, COUNT(w) AS count FROM Word w WHERE w.user = :user GROUP BY w.topic.name")
+    List<Object[]> countGroupByTopic(User user);
 
     @Query(value = """
-                SELECT DATE(w.learned_at) AS date, COUNT(*) FROM word w
-                WHERE w.learned = true AND w.learned_at >= CURDATE() - INTERVAL 6 DAY
-                GROUP BY DATE(w.learned_at)
-                ORDER BY DATE(w.learned_at)
+                SELECT DATE(learned_at) AS learnedDate, COUNT(*)
+                FROM word
+                WHERE user_id = :userId AND learned = true AND learned_at IS NOT NULL
+                    AND learned_at >= CURDATE() - INTERVAL 6 DAY
+                GROUP BY DATE(learned_at)
+                ORDER BY learnedDate
             """, nativeQuery = true)
-    List<Object[]> getWeeklyStats();
+    List<Object[]> getWeeklyStats(Long userId);
 
     @Query(value = """
-                SELECT DATE_FORMAT(w.learned_at, '%Y-%m') AS month, COUNT(*) FROM word w
-                WHERE w.learned = true AND w.learned_at IS NOT NULL
+                SELECT DATE_FORMAT(learned_at, '%Y-%m') AS month, COUNT(*)
+                FROM word
+                WHERE user_id = :userId AND learned = true AND learned_at IS NOT NULL
                 GROUP BY month
                 ORDER BY month
             """, nativeQuery = true)
-    List<Object[]> getMonthlyStats();
+    List<Object[]> getMonthlyStats(Long userId);
 
     @Query(value = """
-                SELECT YEAR(w.learned_at) AS year, COUNT(*) FROM word w
-                WHERE w.learned = true AND w.learned_at IS NOT NULL
+                SELECT YEAR(learned_at) AS year, COUNT(*)
+                FROM word
+                WHERE user_id = :userId AND learned = true AND learned_at IS NOT NULL
                 GROUP BY year
                 ORDER BY year
             """, nativeQuery = true)
-    List<Object[]> getYearlyStats();
+    List<Object[]> getYearlyStats(Long userId);
+
+    List<Word> findByUser(User user);
+
+    Optional<Word> findByVocabularyIgnoreCaseAndUser(String vocabulary, User user);
+
+    List<Word> findByLearnedFalseAndUser(User user);
+
+    List<Word> findByLearnedTrueAndUser(User user);
+
+    List<Word> findByLearnedTrueAndUserAndTopic_NameIgnoreCase(User user, String topicName);
 }

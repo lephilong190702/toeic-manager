@@ -1,8 +1,8 @@
 // src/services/api.js
 import axios from "axios";
 
-// ⚙️ Cấu hình baseURL
-const API_BASE_URL = "https://toeic-manager-production.up.railway.app/api";
+// ⚙️ Base URL config
+const API_BASE_URL = "http://localhost:8080/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -11,40 +11,46 @@ const api = axios.create({
   },
 });
 
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// === AUTH ===
+export const login = (data) => api.post("/auth/login", data);
+export const register = (data) => api.post("/auth/register", data);
+
 // === WORDS ===
 export const getAllWords = () => api.get("/words");
 export const getWordById = (id) => api.get(`/words/${id}`);
-export const createWord = (word) => api.post("/words", word);
 export const generateBatch = (words) => api.post("/words/generate-batch", words);
-export const updateWord = (id, updatedWord) => api.put(`/words/${id}`, updatedWord);
-export const deleteWord = (id) => api.delete(`/words/${id}`);
-export const toggleLearned = (id) => api.patch(`/words/learned/${id}`);
 export const regeneratePostcard = (id) => api.put(`/words/${id}/regenerate`);
+export const toggleLearned = (id) => api.patch(`/words/learned/${id}`);
 export const getUnlearned = () => api.get("/words/unlearned");
+export const getLearnedByTopic = (topic) => api.get(`/words/learned-by-topic`, { params: { topic } });
+export const deleteWord = (id) => api.delete(`/words/${id}`);
 
-// === TOPICS ===
-export const getTopics = () => api.get("/topics");
-export const getLearnedWordsByTopic = (topicId) =>
-  api.get(`/topics/${topicId}/words/learned`);
-
-// == STATS ==
-export const getStats = () => api.get("/stats");
-export const getStatsHistory = (range) =>
-  api.get(`/stats/history?range=${range}`);
+// === STATS / TOPICS ===
+export const getTopics = () => api.get("/topics"); // nếu bạn có endpoint này
+export const getStats = () => api.get("/stats");   // nếu có endpoint thống kê
+export const getStatsHistory = (range) => api.get(`/stats/history?range=${range}`); // nếu có biểu đồ theo tháng
 
 
 export default {
+  login,
+  register,
   getAllWords,
   getWordById,
-  createWord,
   generateBatch,
-  updateWord,
-  deleteWord,
-  toggleLearned,
   regeneratePostcard,
+  toggleLearned,
+  getUnlearned,
+  getLearnedByTopic,
+  deleteWord,
   getTopics,
-  getLearnedWordsByTopic,
   getStats,
   getStatsHistory,
-  getUnlearned
 };
